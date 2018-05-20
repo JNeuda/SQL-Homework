@@ -232,7 +232,7 @@ SELECT * FROM rental;
 SELECT * FROM inventory;
 SELECT * FROM film;
 
-SELECT title, 
+SELECT film.title
 FROM film
 WHERE film_id IN
 (
@@ -247,33 +247,52 @@ WHERE film_id IN
 -- incomplete
 
 SELECT * FROM store;
-SELECT * FROM staff;
-SELECT * FROM payment;
+SELECT * FROM inventory;
+SELECT * FROM inventory;
 
-SELECT count(amount)
-FROM payment
-WHERE staff_id IN
-(
- SELECT staff_id
- FROM staff
- WHERE store_id IN
- (
-  SELECT store_id
-  FROM store
- ) 
-);
+
+select store.store_id, sum(payment.amount)
+from store, payment, inventory, rental
+where store.store_id = inventory.store_id and inventory.inventory_id = rental.inventory_id
+	and rental.rental_id = payment.rental_id
+group by store.store_id;
 
 -- 7g. Write a query to display for each store its store ID, city, and country.
-SELECT * FROM store;
 
-
-
+select store.store_id, city.city, country.country
+from store, city, country, address 
+where store.address_id = address.address_id and address.city_id = city.city_id
+	and city.country_id = country.country_id;
 
 -- 7h. List the top five genres in gross revenue in descending order. (Hint: you may need to use the following tables: category, film_category, inventory, payment, and rental.)
--- 8a. In your new role as an executive, you would like to have an easy way of viewing the Top five genres by gross revenue. Use the solution from the problem above to create a view. If you haven't solved 7h, you can substitute another query to create a view.
--- 8b. How would you display the view that you created in 8a?
--- 8c. You find that you no longer need the view top_five_genres. Write a query to delete it.
 
+select category.name category, sum(payment.amount) total 
+from category , payment, film_category, inventory, rental
+where category.category_id = film_category.category_id 
+	and	film_category.film_id = inventory.film_id
+    and inventory.inventory_id = rental.inventory_id
+    and rental.rental_id = payment.rental_id
+group by category.name
+order by total desc
+limit 5;
+
+-- 8a. In your new role as an executive, you would like to have an easy way of viewing the Top five genres by gross revenue. Use the solution from the problem above to create a view. If you haven't solved 7h, you can substitute another query to create a view.
+create view `Top 5 Categories by gross revenue` as
+select category.name category, sum(payment.amount) total 
+from category , payment, film_category, inventory, rental
+where category.category_id = film_category.category_id 
+	and	film_category.film_id = inventory.film_id
+    and inventory.inventory_id = rental.inventory_id
+    and rental.rental_id = payment.rental_id
+group by category.name
+order by total desc
+limit 5;
+
+-- 8b. How would you display the view that you created in 8a?
+select * from `Top 5 categories by gross revenue`;
+
+-- 8c. You find that you no longer need the view top_five_genres. Write a query to delete it.
+drop view `Top 5 categories by gross revenue`;
 
 
 
